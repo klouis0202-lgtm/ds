@@ -1,0 +1,350 @@
+---
+title: "SD week2 HW 41378061"
+author: "郭柏佑"
+date: "2026-09-22"
+output: html_document
+---
+
+## 2.1.3
+### a
+```{r}
+N <- 25
+mean_y <- 92.5805
+SE <- 0.4673
+mu0 <- 91
+df <- N - 1
+
+sd_y <- SE * sqrt(N)
+
+T0 <- (mean_y - mu0) / SE
+
+p_value <- 2 * (1 - pt(abs(T0), df))
+
+t_crit_95 <- qt(0.975, df)
+margin_95 <- t_crit_95 * SE
+CI95_lower <- mean_y - margin_95
+CI95_upper <- mean_y + margin_95
+
+sd_y; T0; p_value; CI95_upper
+```
+補齊遺漏值後，由上述結果看到$p-value<\alpha$，因此拒絕$H_0$，有足夠證據顯示母體平均數$\mu$不等於91。
+
+### b
+對立假設為$\mu$不等於91 雙尾
+
+### c
+```{r}
+mu_test <- 90
+reject <- !(mu_test >= CI95_lower & mu_test <= CI95_upper)
+reject
+```
+$\mu_0=90$不在CI內，拒絕$H_0$
+
+### d
+```{r}
+t_crit_99 <- qt(0.995, df)
+margin_99 <- t_crit_99 * SE
+
+CI99_lower <- mean_y - margin_99
+CI99_upper <- mean_y + margin_99
+
+t_crit_99; CI99_lower; CI99_upper
+```
+由上面輸出結果知 99%CI=$$(91.27349,93.88751)$$
+查t表得到$df=24$時，$t=2.797$
+99%CI = $92.5805\pm2.797*0.4673=92.5805\pm1.3072$
+
+### e
+```{r}
+p_one_sided <- 1 - pt(T0, df)
+p_one_sided
+```
+
+
+## 2.20
+### a
+$$H_0 : \mu=120$$
+$$H_a : \mu=120$$
+右尾
+
+### b
+```{r}
+days <- c(108, 124, 124, 106, 115, 138, 163, 159, 134, 139)
+
+n <- length(days)
+mean_days <- mean(days)
+sd_days <- sd(days)
+mu0 <- 120
+alpha <- 0.01
+mean_days
+sd_days
+t_2.20_result = t.test(days, mu = mu0, conf.level = 1 - alpha)
+t_2.20_result
+```
+131在CI內 因此不拒絕$H_0$，由上述結果得知，在$\alpha$ = 0.01下，沒有足夠證據支持貨架壽命>120天
+
+### c
+```{r}
+T0 <- (mean_days - mu0) / (sd_days / sqrt(n))
+df <- n - 1
+p_value <- 1 - pt(T0, df)
+
+T0; p_value
+```
+由上述結果知$P-value>\alpha$
+因此一樣不拒絕$H_0$
+
+### d
+由b的程式碼已經知道99%CI = (110.914,151.086)
+
+
+## 2.25
+### a
+$$H_0 : {\sigma_1}^2 = {\sigma_2}^2$$
+$$H_a : {\sigma_1}^2 \neq {\sigma_2}^2$$
+```{r}
+type1 <- c(65, 81, 57, 66, 82, 82, 67, 59, 75, 70)
+type2 <- c(64, 71, 83, 59, 65, 56, 69, 74, 82, 79)
+
+sd1 <- sd(type1)
+sd2 <- sd(type2)
+
+var_test_2.25_result <- var.test(type1, type2, alternative = "two.sided")
+
+sd1; sd2; var_test_2.25_result
+```
+$P-value>\alpha$ 因此不拒絕$H_0$
+沒有足夠證據顯示兩個樣本的變異數不同
+
+### b
+$$H_0 : \mu_1 = \mu_2$$
+$$H_a : \mu_1 \neq \mu_2$$
+```{r}
+t_test_2.25_result <- t.test(type1, type2,
+                         alternative = "two.sided",
+                         paired = FALSE,
+                         var.equal = TRUE)
+
+t_test_2.25_result
+```
+可以看到$P-value>\alpha$
+因此不拒絕$H_0$ 兩個樣本平均燃燒時間相同
+
+### c
+(a) 中的$F$檢定對常態性假設相當敏感;若母體並非常態分布，即使變異數相等，型一錯誤率也可能嚴重偏離設定的$\alpha$使結論不可靠。
+(b) 中的$t$檢定對常態性的違反較不敏感，尤其在兩組樣本數相同、樣本數不算太小時，即使資料稍微偏離常態，$t$檢定的效果仍大致可信。
+```{r}
+par(mfrow = c(1, 2))
+qqnorm(type1, main = "QQ Plot of Type 1")
+qqline(type1, col = "red")
+qqnorm(type2, main = "QQ Plot of Type 2")
+qqline(type2, col = "red")
+```
+觀察兩組資料的 QQ 圖,若資料點大致沿著紅色直線分布,則支持常態性假設。我們可以看到圖中的結果基本上符合前面論述。
+
+
+## 2.28
+### a
+$$H_0 : \mu_1 = \mu_2$$
+$$H_a : \mu_1 > \mu_2$$
+```{r}
+temp95 <- c(11.176, 7.089, 8.097, 11.739, 11.291, 10.759, 6.467, 8.315)
+temp100 <- c(5.265, 6.751, 7.463, 6.995, 8.103, 7.525, 3.789, 8.895)
+
+sd95 <- sd(temp95)
+sd100 <- sd(temp100)
+
+var_test_2.28_result <- var.test(temp95, temp100, alternative = "two.sided")
+
+sd95; sd100; var_test_2.28_result
+```
+上面先檢定兩者變異數是否相等，結果為$P-value>\alpha$因此不拒絕變異數相等的假設
+接著可以使用等變異數的$t$檢定來檢定兩組平均數是否相等
+```{r}
+t_test_2.28_result <- t.test(temp95, temp100,
+                         alternative = "greater",
+                         paired = FALSE,
+                         var.equal = TRUE)
+
+t_test_2.28_result
+```
+結果為$P-value<\alpha$ 因此拒絕$H_0$，有足夠證據顯示較高的烘烤溫度(100°C)會使平均光阻厚度較低。
+
+### b
+$P-value=0.008927$
+
+### c
+```{r}
+CI_2.28_result <- t.test(temp95, temp100,
+                     alternative = "two.sided",
+                     paired = FALSE,
+                     var.equal = TRUE,
+                     conf.level = 0.95)
+
+CI_2.28_result$conf.int
+```
+95%CI = $(0.579, 6.187)$ 由於CI不包含0，因此拒絕$H_0$，有足夠證據顯示95℃的光阻厚度大於100℃
+
+### d
+```{r}
+stripchart(list("95C" = temp95, "100C" = temp100),
+           method = "stack",
+           pch = 19,
+           col = c("blue", "red"),
+           main = "Dot Diagram of Photoresist Thickness",
+           xlab = "Thickness (kA)")
+```
+由點圖可觀察到95°C 組的資料點整體偏右(數值較大)，而100°C組的資料點整體偏左(數值較小)，與檢定結果相符。
+
+### e
+```{r}
+par(mfrow = c(1, 2))
+qqnorm(temp95, main = "QQ Plot of 95°C")
+qqline(temp95, col = "red")
+qqnorm(temp100, main = "QQ Plot of 100°C")
+qqline(temp100, col = "red")
+```
+觀察兩組資料的 Q-Q 圖，資料點大致沿紅色直線分布無明顯的系統性偏離，因此常態性假設大致合理支持前述使用 t 檢定的正確性。
+
+### f
+```{r}
+sp <- sqrt(((length(temp95) - 1) * sd95^2 + (length(temp100) - 1) * sd100^2) /
+             (length(temp95) + length(temp100) - 2))
+
+power_result <- power.t.test(n = 8, delta = 2.5, sd = sp,
+                              sig.level = 0.05,
+                              type = "two.sample",
+                              alternative = "one.sided")
+
+sp; power_result
+```
+$S_p=1.877562$ 檢定力=$0.8122321$
+也就是說,在真實平均差為 2.5 kA 的情況下，以目前每組 8 個樣本,有約 81.2% 的機率能正確偵測出此差異，即拒絕$H_0$
+
+### g
+```{r}
+n_result <- power.t.test(delta = 1.5, sd = sp,
+                          sig.level = 0.05,
+                          power = 0.90,
+                          type = "two.sample",
+                          alternative = "one.sided")
+
+n_result
+```
+以上述結果來看，若要達到90%檢定力則至少需要28個樣本。
+
+
+## 2.34
+### a
+$$ H_0 : \mu_d = 0$$
+$$H_a : \mu_d \neq 0$$
+```{r}
+karlsruhe <- c(1.186, 1.151, 1.322, 1.339, 1.200, 1.402, 1.365, 1.537, 1.559)
+lehigh <- c(1.061, 0.992, 1.063, 1.062, 1.065, 1.178, 1.037, 1.086, 1.052)
+
+diff <- karlsruhe - lehigh
+mean_diff <- mean(diff)
+sd_diff <- sd(diff)
+
+t_test_2.34_result <- t.test(karlsruhe, lehigh,
+                         alternative = "two.sided",
+                         paired = TRUE)
+
+mean_diff; sd_diff; t_test_2.34_result
+```
+由上述結果得$P-value<\alpha$，拒絕$H_0$，有足夠證據兩者在剪力強度上有顯著差異。
+
+### b
+由a結果得$P-value=0.008927$
+
+### c
+```{r}
+CI_result <- t.test(karlsruhe, lehigh,
+                     alternative = "two.sided",
+                     paired = TRUE,
+                     conf.level = 0.95)
+
+CI_result$conf.int
+```
+95%CI = $(0.034, 0.254)$ 由於CI不包含0，因此拒絕$H_0$，有足夠證據顯示兩者在剪力強度上有顯著差異。
+
+### d
+```{r}
+par(mfrow = c(1, 2))
+qqnorm(karlsruhe, main = "QQ Plot of Karlsruhe Method")
+qqline(karlsruhe, col = "red")
+qqnorm(lehigh, main = "QQ Plot of Lehigh Method")
+qqline(lehigh, col = "red")
+```
+由於樣本數僅9很小的關係，Q-Q圖可能不太能夠清楚顯示常態性，但還是觀察兩組資料的圖大多點直線分布無明顯的系統性偏離，因此常態性假設大致合理。
+
+### e
+```{r}
+qqnorm(diff, main = "QQ Plot of (Karlsruhe - Lehigh) Difference")
+qqline(diff, col = "red")
+```
+由上面的Q-Q圖可以看到差值的點大致沿著紅線分布無明顯系統性偏離，因此支持差值$d_j = y_{1j}-y{2j}$符合常態分布的假設。
+
+### f
+配對 t 檢定的推論(如 P-value 的正確性、信賴區間的有效性)是建立在差值$d_j = y_{1j} - y_{2j}$ 服從常態分布的假設上，而不是要求兩組原始資料各自獨立地服從常態分布。
+(d) 檢查的是兩組原始資料各自的常態性，這對配對 t 檢定而言並非嚴格必要的假設。
+(e) 檢查的差值的常態性,才是配對 t 檢定真正依賴的假設。若差值明顯偏離常態(如樣本數小且有明顯偏態或離群值),則 t 檢定的 P-value 與信賴區間可能不準確。
+由於 (e) 中差值的 QQ 圖大致呈線性,可認為本題使用配對 t 檢定是合理的。
+
+
+## 2.37
+### a
+$$H_0 : \mu_1= \mu_2$$
+$$H_a : \mu_1 \neq \mu_2$$
+```{r}
+solution1 <- c(9.9, 10.6, 9.4, 10.3, 10.0, 9.3)
+solution2 <- c(10.2, 10.6, 10.0, 10.2, 10.7, 10.4)
+
+mean1 <- mean(solution1)
+mean2 <- mean(solution2)
+sd1 <- sd(solution1)
+sd2 <- sd(solution2)
+
+t_test_2.37_result <- t.test(solution1, solution2,
+                         alternative = "two.sided",
+                         paired = FALSE,
+                         var.equal = TRUE)
+
+mean1; mean2; sd1; sd2; t_test_2.37_result
+```
+由結果得知$P-value=0.2063>\alpha$，因此不拒絕$H_0$，沒有足夠證據顯示兩種溶液的平均蝕刻速率不同。
+
+### b
+```{r}
+CI_2.37_result <- t.test(solution1, solution2,
+                     alternative = "two.sided",
+                     paired = FALSE,
+                     var.equal = TRUE,
+                     conf.level = 0.95)
+
+CI_2.37_result$conf.int
+```
+95%CI = $(-0.430, 0.930)$ 由於CI包含0，因此不拒絕$H_0$，與a的結論一致，沒有足夠證據顯示兩種溶液的平均蝕刻速率不同。
+
+### c
+```{r}
+par(mfrow = c(1, 2))
+qqnorm(solution1, main = "QQ Plot of Solution 1")
+qqline(solution1, col = "red")
+qqnorm(solution2, main = "QQ Plot of Solution 2")
+qqline(solution2, col = "red")
+```
+
+```{r}
+var_2.37_test_result <- var.test(solution1, solution2, alternative = "two.sided")
+var_2.37_test_result
+```
+$$F_0 = {s_1}^2/{s_2}^2 = 2.899$$
+$$P-value>\alpha$$
+因此不拒絕變異數相等的假設。
+
+觀察 Q-Q 圖,兩組資料點大致沿紅線分布，無明顯系統性偏離，支持常態性假設合理，而F檢定結果也支持兩溶液變異數相等的假設，因此(a) 中使用「假設變異數相等的兩樣本 t 檢定」是合適的。
+
+
+
+
