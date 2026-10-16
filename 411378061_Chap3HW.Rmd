@@ -1,0 +1,340 @@
+---
+title: "411378061Chap3HW"
+author: "郭柏佑"
+date: "2026-10-16"
+output: html_document
+---
+
+## 3.4
+```{r}
+df_error <- 25
+df_total <- 29
+SS_error <- 186.53
+SS_total <- 1174.24
+MS_factor <- 246.93
+
+df_factor <- df_total - df_error
+SS_factor <- SS_total - SS_error
+MS_error <- SS_error / df_error
+F_value <- MS_factor / MS_error
+p_value <- pf(F_value, df_factor, df_error,
+              lower.tail = FALSE)
+
+ANOVA_table <- data.frame(
+  Source = c("Factor", "Error", "Total"),
+  DF = c(df_factor, df_error, df_total),
+  SS = c(SS_factor, SS_error, SS_total),
+  MS = c(MS_factor, MS_error, NA),
+  F = c(F_value, NA, NA),
+  P = c(p_value, NA, NA)
+)
+
+print(ANOVA_table)
+```
+因$p-value$<0.05，拒絕虛無假設，有足夠證據顯示至少一組母體平均數與其餘的不同。
+
+
+## 3.18
+### a
+```{r}
+df_3.18 <- data.frame(
+  Coating = factor(rep(1:4, each = 4)),
+  Conductivity = c(
+    143, 141, 150, 146,
+    152, 149, 137, 143,
+    134, 136, 132, 127,
+    129, 127, 132, 129
+  )
+)
+```
+
+```{r}
+fit_3.18 <- aov(Conductivity ~ Coating, data = df_3.18)
+summary(fit_3.18)
+```
+由 ANOVA 表可得 $F=14.30$ 且 $p\text{-value}=0.000288<0.05$，因此拒絕$H_0$。表示至少有一種塗層的平均導電率存在顯著差異。
+
+### b
+```{r}
+# Overall mean
+mean(df_3.18$Conductivity)
+
+# Treatment means
+tapply(df_3.18$Conductivity, df_3.18$Coating, mean)
+
+# Treatment effects
+tapply(df_3.18$Conductivity, df_3.18$Coating, mean) -
+  mean(df_3.18$Conductivity)
+```
+第2種塗層的平均導電率最高 第4種塗層平均導電率最低，第1,2種塗層的平均導電率高於整體平均，而第3,4種低於整體平均。
+
+### c
+```{r}
+# Extract MSE and error degrees of freedom
+MSE <- summary(fit_3.18)[[1]][2, "Mean Sq"]
+df_error <- df.residual(fit_3.18)
+
+# Treatment means and sample sizes
+means <- tapply(df_3.18$Conductivity, df_3.18$Coating, mean)
+n <- table(df_3.18$Coating)
+
+# 95% CI for mean of Coating 4
+CI_4 <- means["4"] +
+  c(-1, 1) * qt(0.975, df_error) *
+  sqrt(MSE / n["4"])
+
+CI_4
+
+# 99% CI for difference between Coating 1 and 4
+diff_14 <- means["1"] - means["4"]
+
+CI_14 <- diff_14 +
+  c(-1, 1) * qt(0.995, df_error) *
+  sqrt(MSE * (1 / n["1"] + 1 / n["4"]))
+
+CI_14
+```
+第4種塗層的母體平均導電率95%CI為$(124.4162, 134.0838)$
+第1種與第4種塗層的母體平均導電率差異99%CI為$(6.1665, 25.3335)$
+表示第1種塗層的平均導電率顯著高於第4種塗層。
+
+### d
+```{r}
+if (!("agricolae" %in% rownames(installed.packages()))) {
+  install.packages("agricolae")
+}
+
+library(agricolae)
+
+out_3.18 <- LSD.test(fit_3.18, "Coating", p.adj = "none")
+print(out_3.18)
+```
+依上述結果，第1,2種塗層之間沒有顯著差異，第3,4種塗層之間也沒有顯著差異，但第1,2種塗層的平均導電率皆顯著高於第3,4種塗層。
+
+### e
+```{r}
+boxplot(Conductivity ~ Coating, data = df_3.18,
+        xlab = "Coating Type",
+        ylab = "Conductivity",
+        main = "Conductivity by Coating Type")
+```
+由盒鬚圖可觀察到，第1,2種塗層的導電率整體較高，第3,4種塗層則較低。盒鬚圖呈現的分布差異與ANOVA及Fisher LSD的檢定結果一致。
+
+### f
+```{r}
+tapply(df_3.18$Conductivity, df_3.18$Coating, mean)
+
+out_3.18$groups
+```
+若製造商希望降低導電率建議繼續使用第4種塗層，因為目前沒有足夠的統計證據顯示其他三種塗層能提供更低的平均導電率。
+
+
+## 3.24
+### a
+```{r}
+df_3.24 <- data.frame(
+  Fluid = as.factor(rep(1:4, each = 6)),
+  Life = c(
+    17.6, 18.9, 16.3, 17.4, 20.1, 21.6,
+    16.9, 15.3, 18.6, 17.1, 19.5, 20.3,
+    21.4, 23.6, 19.4, 18.5, 20.5, 22.3,
+    19.3, 21.1, 16.9, 17.5, 18.3, 19.8
+  )
+)
+```
+
+```{r}
+fit_3.24 <- aov(Life ~ Fluid, data = df_3.24)
+summary(fit_3.24)
+```
+由於$p-value$>0.05，因此不拒絕$H_0$，表示目前沒有足夠的統計證據認為四種絕緣液體的平均使用壽命存在顯著差異。
+
+### b
+```{r}
+# (b) Descriptive statistics
+tapply(df_3.24$Life, df_3.24$Fluid, summary)
+
+# Compare treatment means
+tapply(df_3.24$Life, df_3.24$Fluid, mean)
+
+# Boxplot
+boxplot(Life ~ Fluid, data = df_3.24,
+        xlab = "Fluid Type",
+        ylab = "Life (hours)",
+        main = "Life by Fluid Type")
+```
+由上述結果來看，第3種液體的樣本平均壽命最高，因此若以延長使用壽命為主要目標建議使用第3種液體。
+
+### c
+```{r}
+# (c) Model adequacy checking
+par(mfrow = c(1, 2))
+plot(fit_3.24, which = 1:2)
+```
+由Residuals vs Fitted 圖沒有看到明顯隨預測值增加而擴大或縮小的趨勢，因此沒有明顯證據顯示違反變異數齊一性假設，且由 Normal Q-Q Plot 可觀察到，大部分殘差點大致沿著參考直線分布沒有明顯偏離常態分布的情形，因此殘差的常態性假設大致合理。
+
+```{r}
+resid <- fit_3.24$residuals
+
+plot(1:length(resid), resid,
+     xlab = "Run Order",
+     ylab = "Residual")
+```
+殘差沒有明顯的持續上升、下降或週期性趨勢，因此沒有明顯證據顯示違反獨立性假設。
+
+```{r}
+shapiro.test(fit_3.24$residuals)
+```
+由 Shapiro-Wilk 常態性檢定可得$p-value$=0.3760>0.05，因此不拒絕$H_0$，表示沒有足夠證據認為殘差不服從常態分布，故常態性假設可視為合理。
+
+```{r}
+library(asbio)
+
+modlevene.test(fit_3.24$residuals, df_3.24$Fluid)
+```
+$p-value$ = 0.93676>0.05，因此不拒絕$H_0$，表示變異數齊一性假設成立。
+因此，目前沒有明顯證據顯示單因子 ANOVA 的基本假設遭到違反。
+
+
+## 3.28
+### a
+```{r}
+df_3.28 <- data.frame(
+  Method = as.factor(rep(1:3, each = 6)),
+  Count = c(
+    31, 10, 21, 4, 1, 11,
+    62, 40, 24, 30, 35, 43,
+    53, 27, 120, 97, 68, 80
+  )
+)
+```
+
+```{r}
+fit_3.28 <- aov(Count ~ Method, data = df_3.28)
+summary(fit_3.28)
+```
+ANOVA 結果可得$F=12.36$，$p\text{-value}=0.000673<0.05$，因此拒絕$H_0$，表示三種方法的平均粒子數存在顯著差異。
+
+### b
+```{r}
+par(mfrow = c(1, 2))
+plot(fit_3.28, which = 1:2)
+```
+隨著預測粒子數增加，殘差的分散程度有擴大的趨勢可能存在變異數不齊一的問題。
+差點大致沿著參考直線分布，雖然部分點存在偏離但未呈現明顯嚴重違反常態分布的情形。
+
+```{r}
+shapiro.test(fit_3.28$residuals)
+```
+因為$p-value$>0.05，因此不拒絕$H_0$，沒有足夠證據認為殘差不符合常態分布。
+
+```{r}
+modlevene.test(fit_3.28$residuals, df_3.28$Method)
+```
+$p-value$>0.05，不拒絕$H_0$，表示沒有足夠證據認為三種方法的母體變異數存在顯著差異。但與Residuals vs Fitted 圖的結果存在衝突。
+
+### c
+```{r}
+library(MASS)
+
+fitbc <- boxcox(fit_3.28, plotit = TRUE)
+
+lambda_3.28 <- fitbc$x[which.max(fitbc$y)]
+lambda_3.28
+```
+選擇平方根轉換
+
+```{r}
+fits_3.28 <- aov(sqrt(Count) ~ Method, data = df_3.28)
+summary(fits_3.28)
+```
+$p-value$仍小於 0.05，因此拒絕$H_0$，表示三種方法在轉換後尺度上的平均粒子數存在顯著差異。
+
+```{r}
+par(mfrow = c(1, 2))
+plot(fits_3.28, which = 1:2)
+```
+平方根轉換後，各組殘差的分散程度較原始資料一致，且 Normal Q-Q Plot 的點大致沿著參考直線分布，顯示模型假設的適切性有所改善。
+
+```{r}
+shapiro.test(fits_3.28$residuals)
+```
+由 Shapiro-Wilk 檢定可得$p-value$>0.05，因此不拒絕H_0，表示沒有足夠證據認為轉換後的殘差不符合常態分布。
+
+```{r}
+modlevene.test(fits_3.28$residuals, df_3.28$Method)
+```
+$p-value$>0.05，不拒絕$H_0$，表示沒有足夠證據認為三組母體變異數存在顯著差異。
+由上述結果得知採用平方根轉換後，重新進行 ANOVA 仍得到顯著結果，且殘差的常態性與變異數齊一性表現有所改善。
+
+
+## 3.48
+### a
+```{r}
+df_3.48 <- data.frame(
+  FeedRate = as.factor(rep(c(10, 12, 14, 16), each = 5)),
+  Dimension = c(
+    0.09, 0.10, 0.13, 0.08, 0.07,
+    0.06, 0.09, 0.12, 0.07, 0.12,
+    0.11, 0.08, 0.08, 0.05, 0.06,
+    0.19, 0.13, 0.15, 0.20, 0.11
+  )
+)
+```
+
+```{r}
+tapply(df_3.48$Dimension, df_3.48$FeedRate, sd)
+```
+由上面結果可知Feed Rate = 16的樣本標準差最大。
+
+```{r}
+boxplot(Dimension ~ FeedRate, data = df_3.48,
+        xlab = "Feed Rate (in/min)",
+        ylab = "Dimension",
+        main = "Dimension by Feed Rate")
+```
+由盒鬚圖可觀察到Feed Rate = 16的數值較高，且分散程度相對較大。
+
+```{r}
+modlevene.test(df_3.48$Dimension, df_3.48$FeedRate)
+```
+得到$P-value$>0.05，因此不拒絕$H_0$，沒有足夠證據認為四種進給速率的母體標準差不同。
+
+### b
+```{r}
+fit_3.48 <- aov(Dimension ~ FeedRate, data = df_3.48)
+
+par(mfrow = c(1, 2))
+plot(fit_3.48, which = 1:2)
+```
+各組殘差的分散程度略有差異，Feed Rate = 16的殘差範圍較大，可能存在嚴重的變異數不齊一問題。
+根據上面的Q-Q plot沒有出現嚴重偏離常態的情形，因此可能服從常態性假設。
+
+```{r}
+shapiro.test(fit_3.48$residuals)
+```
+$p-value$= 0.2725>0.05，因此不拒絕H_0，表示沒有足夠證據認為殘差不符合常態分布。
+
+```{r}
+resid_3.48 <- fit_3.48$residuals
+
+plot(1:length(resid_3.48), resid_3.48,
+     xlab = "Run Order",
+     ylab = "Residual")
+abline(h = 0, lty = 2)
+```
+由上圖可以推斷其符合獨立性假設。
+
+```{r}
+modlevene.test(fit_3.48$residuals, df_3.48$FeedRate)
+```
+$P-value$ = 0.4846>0.05，因此不拒絕$H_0$，因此沒有足夠證據證明四組母體變異數不同，變異數齊一性假設沒有明顯違反。
+
+
+
+
+
+
+
+
+
